@@ -107,6 +107,37 @@ The `examples/` directory contains comprehensive usage examples:
 - **GitHub Workflows** (`examples/03_github_workflows/`) - CI/CD integration and automated workflows
 - **Skills and Plugins** (`examples/05_skills_and_plugins/`) - AgentSkills, plugins, and marketplace examples
 
+### Patcher
+
+`patcher` is a fork of the [OpenHands Software Agent SDK](https://github.com/OpenHands/software-agent-sdk).
+Its [Patcher example](examples/01_standalone_sdk/patcher.py) sends pytest failures
+to an OpenHands agent and reruns the same test file after the agent edits the
+implementation. `Verified` requires unchanged test file contents and a passing
+result for every originally collected test, with zero skips.
+
+From the repository root, set `LLM_MODEL` and `LLM_API_KEY` for your provider.
+Set `LLM_BASE_URL` if the provider uses a custom endpoint. Then run this demo in
+a fresh temporary directory.
+
+```sh
+demo=$(mktemp -d)
+cat > "$demo/arithmetic.py" <<'PY'
+def add(a, b):
+    return a - b
+PY
+cat > "$demo/test_arithmetic.py" <<'PY'
+from arithmetic import add
+
+def test_add():
+    assert add(2, 3) == 5
+PY
+uv run python examples/01_standalone_sdk/patcher.py "$demo" test_arithmetic.py
+```
+
+The first run fails with `-1 != 5`. The agent should change `a - b` to `a + b`
+in `arithmetic.py`, after which the same test passes and Patcher prints
+`Verified`. Run the command again against the same directory to see `Already passing`.
+
 ## Skills for modern package tooling
 
 If you enable public skills with `AgentContext(load_public_skills=True)`, the default
